@@ -54,10 +54,14 @@ Notes:
 - £/m² (price, unadjusted_price) are Zone A equivalents for shops
 - postcode_area examples: M1, M6, M30, M60, SK1, OL4, BL1, WN3
 - Window functions (OVER, PARTITION BY, ROW_NUMBER, RANK, LAG, LEAD) are available
-- ROUND(double precision, integer) does not exist in PostgreSQL. Always cast first:
+- ROUND(double precision, integer) does not exist in PostgreSQL. Always cast to numeric first:
     ROUND(unadjusted_price::numeric, 2)  -- correct
     ROUND(area::numeric, 2)              -- correct
     ROUND(price::numeric, 2)             -- correct
+- When dividing, cast ALL operands to numeric — dividing numeric by double precision
+  returns double precision, which still breaks ROUND:
+    ROUND(le.rateable_value::numeric / sa.total_area_or_units::numeric, 2)  -- correct
+    ROUND(le.rateable_value::numeric / sa.total_area_or_units, 2)           -- WRONG, still fails
 - percentile_cont is an ordered-set aggregate, NOT a window function. Correct syntax:
     percentile_cont(0.5) WITHIN GROUP (ORDER BY column)
   For partitioned medians, use a subquery or CTE, e.g.:
