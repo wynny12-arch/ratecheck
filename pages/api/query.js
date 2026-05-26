@@ -71,7 +71,15 @@ Return a single SELECT statement only.
 No markdown fences, no explanation, no other text — just raw SQL.
 Never use: DROP, DELETE, INSERT, UPDATE, ALTER, TRUNCATE, CREATE, GRANT, REVOKE, COMMENT.
 Never use multiple statements (no semicolons mid-query).
-Use standard PostgreSQL. Window functions are fine.`
+Use standard PostgreSQL. Window functions are fine.
+
+When a question names a specific property (e.g. "225 Monton Road", "43 High Street Stockport"):
+- Anchor the query by looking up that property's assessment_reference, primary_description_code,
+  and postcode_area from list_entries using UPPER() string matching on street/number_or_name.
+- Compare it only against properties sharing the same primary_description_code prefix
+  (first 2 characters) and the same postcode_area — never against unrelated property types.
+- Do not use numeric values mentioned in the question (m², £/m²) as filter or join criteria;
+  fetch those values from the database instead.`
 
 const SYSTEM_EXPLAIN = `You are a chartered surveyor's research assistant.
 Given a question and query results from a VOA business rates database, write 2–3 sentences of plain-English findings.
