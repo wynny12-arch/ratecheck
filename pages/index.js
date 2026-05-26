@@ -230,11 +230,11 @@ function FollowUpThread({ item }) {
         <div key={i} className={`followup-msg followup-${m.role}`}>{m.content}</div>
       ))}
       {loading && <div className="followup-msg followup-assistant followup-loading">Thinking…</div>}
-      <div ref={bottomRef} />
       <div className="followup-row">
         <input className="followup-input" placeholder="Ask a follow-up about this result…" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }} />
         <button className="followup-send" onClick={send} disabled={loading || !input.trim()}>Ask</button>
       </div>
+      <div ref={bottomRef} />
     </div>
   )
 }
