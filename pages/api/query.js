@@ -167,7 +167,7 @@ export default async function handler(req, res) {
     rows = result.rows
     succeeded = true
 
-    if (rows.length > 0 && rows.length <= 50 && isAnalytical(question)) {
+    if (rows.length > 0 && rows.length <= 200 && isAnalytical(question)) {
       explanation = await generateExplanation(question, rows)
     }
 

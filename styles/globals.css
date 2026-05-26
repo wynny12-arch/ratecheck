@@ -365,7 +365,7 @@ details.sql pre {
   margin-bottom: 16px;
 }
 
-.sidebar { position: sticky; top: 80px; align-self: start; display: flex; flex-direction: column; gap: 32px; }
+.sidebar { position: sticky; top: 80px; align-self: start; display: flex; flex-direction: column; gap: 32px; background: var(--paper); }
 .side-section { border-top: 2px solid var(--ink); padding-top: 16px; }
 .side-section h3 {
   font-family: "Fraunces", Georgia, serif;
