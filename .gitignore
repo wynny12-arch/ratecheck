@@ -1,0 +1,16 @@
+.vercel
+.DS_Store
+node_modules/
+.next/
+.env.local
+.env*.local
+
+# VOA data — large files, not for git
+data/
+*.duckdb
+*.zip
+
+# Python
+venv/
+__pycache__/
+*.pyc

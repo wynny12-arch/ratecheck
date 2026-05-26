@@ -774,6 +774,130 @@
       box-shadow: 0 0 16px rgba(49,208,170,.8);
     }
 
+
+    .floorplan-inner {
+      position: relative;
+      width: 280px;
+      height: 210px;
+      transform-origin: top left;
+    }
+
+    @media (max-width: 480px) {
+      .floorplan {
+        height: clamp(170px, 62vw, 210px);
+      }
+
+      .floorplan-inner {
+        transform: scale(calc((100vw - 88px) / 280));
+      }
+
+      .room-label {
+        font-size: 10px;
+        max-width: 86px;
+        line-height: 1.15;
+      }
+
+      .measurement {
+        font-size: 10px;
+      }
+
+      .evidence-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .confidence-pill {
+        border-radius: 16px;
+        align-items: flex-start;
+        line-height: 1.35;
+      }
+    }
+
+
+    /* Responsive floorplan replacement */
+    .floorplan {
+      height: auto !important;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      border-radius: 22px;
+      overflow: hidden;
+    }
+
+    .floorplan-inner {
+      width: 100% !important;
+      height: auto !important;
+      transform: none !important;
+      display: grid;
+      grid-template-columns: 1.35fr .75fr;
+      grid-template-rows: 82px 74px;
+      gap: 10px;
+      position: relative;
+    }
+
+    .room {
+      position: relative !important;
+      left: auto !important;
+      top: auto !important;
+      width: auto !important;
+      height: auto !important;
+      min-width: 0;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      align-items: flex-start;
+      overflow: hidden;
+    }
+
+    .room-label {
+      position: static !important;
+      font-size: clamp(10px, 3vw, 12px);
+      line-height: 1.1;
+      max-width: 100%;
+      white-space: normal;
+    }
+
+    .measurement {
+      position: static !important;
+      justify-self: center;
+      align-self: center;
+      width: max-content;
+      max-width: 100%;
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    .floorplan-measurements {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 480px) {
+      .floorplan {
+        padding: 10px;
+      }
+
+      .floorplan-inner {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 72px 68px;
+        gap: 8px;
+      }
+
+      .room {
+        padding: 10px;
+      }
+
+      .room-label {
+        font-size: 9px;
+      }
+
+      .evidence-box strong {
+        font-size: 19px;
+      }
+    }
+
     @media (max-width: 900px) {
       .hero { grid-template-columns: 1fr; padding-top: 42px; }
       .grid, .steps { grid-template-columns: 1fr; }
@@ -826,25 +950,29 @@
             <div style="color:#A9C3DD;font-size:13px;margin-top:6px;">Retail unit · Manchester · RV £42,000</div>
             
             <div class="floorplan">
-              <div class="room" style="left:18px;top:22px;width:140px;height:78px;">
-                <div class="room-label">Main Retail</div>
+              <div class="floorplan-inner">
+                <div class="room">
+                  <div class="room-label">Main Retail</div>
+                </div>
+
+                <div class="room">
+                  <div class="room-label">Office</div>
+                </div>
+
+                <div class="room">
+                  <div class="room-label">Storage</div>
+                </div>
+
+                <div class="room">
+                  <div class="room-label">WC / Utility</div>
+                </div>
               </div>
 
-              <div class="room" style="left:170px;top:22px;width:92px;height:78px;">
-                <div class="room-label">Office</div>
+              <div class="floorplan-measurements">
+                <div class="measurement">12.4m frontage</div>
+                <div class="measurement">6.2m depth</div>
+                <div class="measurement">Measured GIA 118m²</div>
               </div>
-
-              <div class="room" style="left:18px;top:112px;width:110px;height:70px;">
-                <div class="room-label">Storage</div>
-              </div>
-
-              <div class="room" style="left:138px;top:112px;width:124px;height:70px;">
-                <div class="room-label">WC / Utility</div>
-              </div>
-
-              <div class="measurement" style="top:6px;left:90px;">12.4m</div>
-              <div class="measurement" style="top:90px;left:206px;">6.2m</div>
-              <div class="measurement" style="bottom:10px;left:94px;">Measured GIA 118m²</div>
             </div>
 
             <div class="evidence-panel">

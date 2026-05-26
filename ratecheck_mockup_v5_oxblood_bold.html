@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RateCheck — Research Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Editorial palette: paper white, near-black ink, single oxblood accent */
+  --paper: #faf7f2;
+  --paper-soft: #f4efe6;
+  --ink: #1a1714;
+  --ink-soft: #4a443d;
+  --ink-faint: #8c857c;
+  --rule: #d8d1c4;
+  --rule-soft: #ebe5d8;
+  --accent: #7a1c2c;
+  --accent-soft: #b94052;
+  --accent-tint: #f4ebed;
+  --success: #2d5a3d;
+  --success-tint: #ebf2ed;
+  --warn: #8a5a14;
+  --warn-tint: #f5ecdb;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: "Inter Tight", system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.5;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Top masthead — narrow, FT-style */
+.masthead {
+  border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.masthead-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.wordmark {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.wordmark em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+}
+
+.masthead-meta {
+  display: flex;
+  gap: 28px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.masthead-meta span:first-child {
+  font-family: "Fraunces", Georgia, serif;
+  font-style: italic;
+}
+
+.masthead-meta a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+
+.masthead-meta a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Document-style frame */
+.shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+/* Hero with editorial framing */
+.banner {
+  padding: 56px 0 48px;
+  border-bottom: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 64px;
+  align-items: end;
+}
+
+.banner-eyebrow {
+  font-family: "Fraunces", Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+  margin-bottom: 16px;
+}
+
+.banner h1 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(40px, 5.5vw, 64px);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  margin: 0 0 20px;
+  color: var(--ink);
+}
+
+.banner h1 em {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--accent);
+}
+
+.banner-lede {
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  max-width: 560px;
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 400;
+}
+
+.banner-stats {
+  border-left: 2px solid var(--ink);
+  padding-left: 24px;
+}
+
+.stat {
+  margin-bottom: 18px;
+}
+
+.stat:last-child { margin-bottom: 0; }
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.stat-figure {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.stat-note {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+/* Two-column workspace */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 48px;
+  padding: 40px 0 80px;
+}
+
+.console-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 28px;
+}
+
+.console-title {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: var(--ink);
+}
+
+.console-meta {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+/* Composer */
+.composer {
+  margin-bottom: 24px;
+}
+
+.composer-label {
+  font-family: "Fraunces", Georgia, serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+}
+
+.composer-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: stretch;
+}
+
+textarea {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  background: #fff;
+  padding: 14px 16px;
+  font: 400 16px/1.5 "Inter Tight", sans-serif;
+  color: var(--ink);
+  outline: none;
+}
+
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-tint);
+}
+
+.submit {
+  align-self: stretch;
+  min-width: 130px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: "Inter Tight", sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  cursor: pointer;
+  padding: 0 20px;
+  transition: all 120ms;
+}
+
+.submit:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Suggested prompts */
+.prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 36px;
+}
+
+.prompt {
+  font-family: "Inter Tight", sans-serif;
+  font-size: 13px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink-soft);
+  padding: 8px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 120ms;
+}
+
+.prompt:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: #fff;
+}
+
+/* Question / response */
+.exchange {
+  border-top: 1px solid var(--rule);
+  padding-top: 24px;
+  margin-top: 8px;
+}
+
+.question {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.question-meta {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-bottom: 22px;
+}
+
+/* The explanation block — the headline finding */
+.finding {
+  padding: 4px 0 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.finding-label {
+  font-family: "Fraunces", Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 12px;
+  letter-spacing: 0.01em;
+}
+
+.finding-text {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 400;
+  font-size: 21px;
+  line-height: 1.45;
+  color: var(--ink);
+  margin: 0 0 16px;
+  letter-spacing: -0.005em;
+  max-width: 720px;
+}
+
+.finding-text strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.finding-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  background: var(--success-tint);
+  border: 1px solid var(--success);
+  color: var(--success);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.signal::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+}
+
+.finding-meta a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+
+.finding-meta a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Results table */
+.results {
+  margin-bottom: 20px;
+}
+
+.results-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+thead {
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+
+th {
+  text-align: left;
+  font-family: "Inter Tight", sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  padding: 10px 12px 10px 0;
+}
+
+th.num, td.num {
+  text-align: right;
+  padding-right: 0;
+  padding-left: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+td {
+  padding: 12px 12px 12px 0;
+  border-bottom: 1px solid var(--rule-soft);
+  color: var(--ink);
+}
+
+tbody tr:last-child td {
+  border-bottom: 2px solid var(--ink);
+}
+
+td.num {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+td.address {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 15px;
+}
+
+td.flag-high {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* SQL disclosure */
+details.sql {
+  margin-top: 8px;
+  border-top: 1px solid var(--rule);
+  padding-top: 12px;
+}
+
+details.sql summary {
+  cursor: pointer;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  padding: 4px 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+details.sql summary::-webkit-details-marker { display: none; }
+
+details.sql summary::after {
+  content: "+";
+  font-family: "JetBrains Mono", monospace;
+  margin-left: auto;
+  color: var(--ink-faint);
+}
+
+details.sql[open] summary::after {
+  content: "−";
+}
+
+details.sql summary:hover {
+  color: var(--ink);
+}
+
+details.sql pre {
+  margin: 12px 0 0;
+  padding: 16px 20px;
+  background: var(--paper-soft);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  overflow: auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+/* Sidebar */
+.sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.side-section {
+  border-top: 2px solid var(--ink);
+  padding-top: 16px;
+}
+
+.side-section h3 {
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 500;
+  font-size: 18px;
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.side-section p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0 0 16px;
+}
+
+.side-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.side-list li {
+  padding: 12px 0;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 14px;
+}
+
+.side-list li:first-child { border-top: none; }
+
+.side-list b {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 2px;
+  color: var(--ink);
+}
+
+.side-list span {
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.schema {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--paper-soft);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  padding: 16px;
+  white-space: pre;
+}
+
+.schema .table { color: var(--accent); font-weight: 500; }
+.schema .col { color: var(--ink-soft); }
+
+/* Footer */
+.colophon {
+  border-top: 2px solid var(--ink);
+  padding: 32px 0 48px;
+  font-size: 13px;
+  color: var(--ink-faint);
+  line-height: 1.6;
+  font-style: italic;
+  font-family: "Fraunces", Georgia, serif;
+  max-width: 720px;
+}
+
+.colophon strong {
+  font-style: normal;
+  font-family: "Inter Tight", sans-serif;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+  font-size: 11px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 980px) {
+  .banner {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .banner-stats {
+    border-left: none;
+    border-top: 1px solid var(--rule);
+    padding-left: 0;
+    padding-top: 24px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .stat { margin: 0; }
+  .workspace {
+    grid-template-columns: 1fr;
+    gap: 48px;
+  }
+  .sidebar { position: static; }
+  .masthead-meta { display: none; }
+}
+
+@media (max-width: 640px) {
+  .shell { padding: 0 20px; }
+  .masthead-inner { padding: 12px 20px; }
+  .banner { padding: 36px 0 32px; }
+  .composer-row { grid-template-columns: 1fr; }
+  .submit { padding: 14px; }
+  .banner-stats { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="wordmark">RateCheck<em> · research console</em></div>
+    <div class="masthead-meta">
+      <span>Salford pilot</span>
+      <span>5,693 hereditaments loaded</span>
+      <a href="#schema">Schema</a>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <section class="banner">
+    <div>
+      <div class="banner-eyebrow">VOA business rates intelligence · prototype</div>
+      <h1>Ask in English. <em>See the evidence.</em></h1>
+      <p class="banner-lede">A research tool for chartered surveyors. Plain questions become SQL against the published rating list; the answer comes with the working shown.</p>
+    </div>
+    <div class="banner-stats">
+      <div class="stat">
+        <div class="stat-label">Hereditaments</div>
+        <div class="stat-figure">5,693</div>
+        <div class="stat-note">Salford pilot corpus</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Postcode areas</div>
+        <div class="stat-figure">5</div>
+        <div class="stat-note">M30 · M28 · M27 · M6 · M44</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Tables</div>
+        <div class="stat-figure">3</div>
+        <div class="stat-note">VOA rating list schema</div>
+      </div>
+    </div>
+  </section>
+
+  <main class="workspace">
+
+    <section>
+      <div class="console-head">
+        <h2 class="console-title">Research console</h2>
+        <div class="console-meta">Read-only · evidence leads, not appeal conclusions</div>
+      </div>
+
+      <div class="composer">
+        <div class="composer-label">Ask a question of the rating list.</div>
+        <div class="composer-row">
+          <textarea>Find properties paying significantly more per sqm than their parade median</textarea>
+          <button class="submit">Run query</button>
+        </div>
+      </div>
+
+      <div class="prompts">
+        <button class="prompt">Highest-tariff parades in Salford</button>
+        <button class="prompt">Compare Monton Road to comparable parades</button>
+        <button class="prompt">Properties above parade median £/sqm</button>
+        <button class="prompt">Full breakdown for 225 Monton Road</button>
+        <button class="prompt">Tariff range across M30 parades with 10+ properties</button>
+      </div>
+
+      <div class="exchange">
+        <p class="question">Find properties paying significantly more per sqm than their parade median.</p>
+        <div class="question-meta">Run · 12:48 BST · 0.6s</div>
+
+        <div class="finding">
+          <div class="finding-label">Headline finding</div>
+          <p class="finding-text">Four properties on Salford-area secondary parades sit materially above their street median £/sqm, led by <strong>225 Monton Road at £356 per sqm against a Monton Road median of £242</strong> — a 47% deviation. All four warrant professional review before any appeal recommendation.</p>
+          <div class="finding-meta">
+            <span class="signal">Worth reviewing</span>
+            <a href="#methodology">12 comparables · methodology</a>
+          </div>
+        </div>
+
+        <div class="results">
+          <div class="results-label">Results · 4 rows</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Street</th>
+                <th class="num">Area sqm</th>
+                <th class="num">RV</th>
+                <th class="num">£/sqm</th>
+                <th class="num">Street median</th>
+                <th class="num">Δ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="address">225 Monton Road</td>
+                <td>Monton Road</td>
+                <td class="num">88.4</td>
+                <td class="num">£31,500</td>
+                <td class="num flag-high">£356.33</td>
+                <td class="num">£241.80</td>
+                <td class="num flag-high">+47%</td>
+              </tr>
+              <tr>
+                <td class="address">Unit 3, Liverpool Road</td>
+                <td>Liverpool Road</td>
+                <td class="num">64.2</td>
+                <td class="num">£21,750</td>
+                <td class="num flag-high">£338.79</td>
+                <td class="num">£226.40</td>
+                <td class="num flag-high">+50%</td>
+              </tr>
+              <tr>
+                <td class="address">Retail Premises, Church Street</td>
+                <td>Church Street</td>
+                <td class="num">71.0</td>
+                <td class="num">£22,250</td>
+                <td class="num flag-high">£313.38</td>
+                <td class="num">£208.15</td>
+                <td class="num flag-high">+51%</td>
+              </tr>
+              <tr>
+                <td class="address">Shop &amp; Premises, Worsley Road</td>
+                <td>Worsley Road</td>
+                <td class="num">54.8</td>
+                <td class="num">£16,800</td>
+                <td class="num flag-high">£306.57</td>
+                <td class="num">£211.90</td>
+                <td class="num flag-high">+45%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <details class="sql">
+          <summary>Generated SQL</summary>
+<pre>select
+  le.assessment_reference,
+  le.property_address,
+  le.street,
+  le.postcode,
+  smv.total_area,
+  smv.rateable_value,
+  round(smv.rateable_value / nullif(smv.total_area, 0), 2) as rv_per_sqm,
+  round(percentile_cont(0.5) within group (
+    order by smv.rateable_value / nullif(smv.total_area, 0)
+  ) over (partition by le.street), 2) as street_median
+from list_entries le
+join smv_assessments smv using (assessment_reference)
+where smv.total_area > 0
+order by (smv.rateable_value / nullif(smv.total_area, 0)) desc
+limit 8;</pre>
+        </details>
+      </div>
+    </section>
+
+    <aside class="sidebar">
+      <div class="side-section">
+        <h3>What the AI checks</h3>
+        <p>Every answer is grounded in the rating-list tables. The SQL is exposed so the working can be inspected.</p>
+        <ul class="side-list">
+          <li>
+            <b>Comparable context</b>
+            <span>Neighbours, parade peers, postcode and scheme references.</span>
+          </li>
+          <li>
+            <b>£/sqm pressure</b>
+            <span>Outliers against street and scheme medians.</span>
+          </li>
+          <li>
+            <b>Zoning evidence</b>
+            <span>Zone A / B / C breakdowns from summary valuation line items.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="side-section">
+        <h3>What this is not</h3>
+        <ul class="side-list">
+          <li>
+            <b>Not an appeal recommendation</b>
+            <span>Anomalies are leads for surveyor review.</span>
+          </li>
+          <li>
+            <b>Not rental evidence</b>
+            <span>The platform sees the list, not the market.</span>
+          </li>
+          <li>
+            <b>Not measurement</b>
+            <span>Floor areas come from VOA records, not site survey.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div id="schema" class="side-section">
+        <h3>Schema</h3>
+        <div class="schema"><span class="table">list_entries</span>
+  <span class="col">assessment_reference</span>
+  <span class="col">uarn</span>
+  <span class="col">postcode</span>
+  <span class="col">street</span>
+  <span class="col">property_address</span>
+
+<span class="table">smv_assessments</span>
+  <span class="col">assessment_reference</span>
+  <span class="col">rateable_value</span>
+  <span class="col">total_area</span>
+  <span class="col">scat_code</span>
+
+<span class="table">smv_line_items</span>
+  <span class="col">assessment_reference</span>
+  <span class="col">line_number</span>
+  <span class="col">description</span>
+  <span class="col">area</span>
+  <span class="col">price</span></div>
+      </div>
+    </aside>
+
+  </main>
+
+  <footer class="colophon">
+    <strong>Prototype note</strong>
+    Figures are illustrative; the production build returns rows from the live Supabase corpus. The AI generates SQL only — answers come from the database, not the model. All outputs are intended for review by a qualified rating surveyor before any appeal action.
+  </footer>
+
+</div>
+
+</body>
+</html>
