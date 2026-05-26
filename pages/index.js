@@ -335,9 +335,10 @@ export default function Home({ user }) {
   const [recentQueries, addToRecent] = useRecentQueries()
   const textareaRef = useRef(null)
   const chatScrollRef = useRef(null)
+  const lastExchangeRef = useRef(null)
 
   useEffect(() => {
-    if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    lastExchangeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [exchanges])
 
   async function runQuery(q) {
@@ -442,7 +443,12 @@ export default function Home({ user }) {
                   <p>Ask a question of the Greater Manchester business rates data.<br />Use the icons on the left to browse examples or check the schema.</p>
                 </div>
               )}
-              {exchanges.map((ex, i) => <Exchange key={i} item={ex} onSuggest={handlePrompt} onRunQuery={runQuery} />)}
+              {exchanges.map((ex, i) => (
+                <div key={i}>
+                  {i === exchanges.length - 1 && <div ref={lastExchangeRef} />}
+                  <Exchange item={ex} onSuggest={handlePrompt} onRunQuery={runQuery} />
+                </div>
+              ))}
             </div>
           </div>
 
