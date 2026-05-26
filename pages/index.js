@@ -28,6 +28,7 @@ function ResultTable({ rows }) {
   if (!rows || rows.length === 0) return <p style={{ color: 'var(--ink-faint)', fontSize: 14 }}>No rows returned.</p>
   const cols = Object.keys(rows[0])
   return (
+    <div style={{ overflowX: 'auto' }}>
     <table>
       <thead>
         <tr>
@@ -54,6 +55,7 @@ function ResultTable({ rows }) {
         ))}
       </tbody>
     </table>
+    </div>
   )
 }
 
