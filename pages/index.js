@@ -2,27 +2,44 @@ import { useState, useRef, useEffect } from 'react'
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 import Head from 'next/head'
 
-const SUGGESTED_PROMPTS = [
-  'Show me how the RV is calculated for 225 Monton Road',
-  'Show the full valuation breakdown for assessment reference 30773892000',
-  'What properties are at postcode M30 9LF?',
-  'Is 225 Monton Road\'s RV in line with peers on Monton Road?',
-  'Compare the unadjusted price per sqm for CS shops in M30',
-  'Find retail shops in M30 where RV per sqm is above the street median',
-  'List the 20 highest RV retail properties in Stockport',
-  'Which offices in M1 have a rateable value above £100,000?',
-  'What scheme reference is used for 225 Monton Road?',
-  'List all CS assessments on the same scheme as 225 Monton Road',
-  'Find all retail shops on Deansgate Manchester with their RVs',
-  'What are the top 10 highest rateable values in M41?',
-  'Find warehouse properties in BL1 with rateable value above £50,000',
-  'Compare Zone A rates across retail shops in Oldham town centre',
-  'Which properties on Monton Road have the highest RV per sqm?',
-  'What is the median RV for offices in Salford M5?',
-  'Show all shop properties on Market Street Manchester',
-  'Find properties in WN1 where adopted RV differs from the calculated value',
-  'How many CS retail shops are there in each M postcode area?',
-  'Show all play centres and leisure facilities in Greater Manchester',
+const EXAMPLE_GROUPS = [
+  {
+    label: 'Getting started',
+    prompts: [
+      'Show me how the RV is calculated for 225 Monton Road',
+      'What properties are at postcode M30 9LF?',
+      'Show the full valuation breakdown for assessment reference 30773892000',
+      'Find all retail shops on Deansgate, Manchester',
+    ],
+  },
+  {
+    label: 'Peer comparison',
+    prompts: [
+      'Is 225 Monton Road\'s RV in line with peers on Monton Road?',
+      'Compare the unadjusted price per sqm for CS shops in M30',
+      'Which properties on Monton Road have the highest RV per sqm?',
+      'Compare Zone A rates across retail shops in Oldham town centre',
+    ],
+  },
+  {
+    label: 'Investigation',
+    prompts: [
+      'Find retail shops in M30 where RV per sqm is above the street median',
+      'List the 20 highest RV retail properties in Stockport',
+      'Which offices in M1 have a rateable value above £100,000?',
+      'Find warehouse properties in BL1 with rateable value above £50,000',
+      'What is the median RV for offices in Salford M5?',
+      'How many CS retail shops are there in each M postcode area?',
+    ],
+  },
+  {
+    label: 'Scheme analysis',
+    prompts: [
+      'What scheme reference is used for 225 Monton Road?',
+      'List all CS assessments on the same scheme as 225 Monton Road',
+      'Find properties in WN1 where adopted RV differs from the calculated value',
+    ],
+  },
 ]
 
 function formatValue(v) {
@@ -200,11 +217,27 @@ function Exchange({ item }) {
   )
 }
 
+function useRecentQueries() {
+  const [recent, setRecent] = useState([])
+  useEffect(() => {
+    try { setRecent(JSON.parse(localStorage.getItem('ratecheck_recent') || '[]')) } catch {}
+  }, [])
+  function add(q) {
+    try {
+      const next = [q, ...recent.filter(x => x !== q)].slice(0, 12)
+      localStorage.setItem('ratecheck_recent', JSON.stringify(next))
+      setRecent(next)
+    } catch {}
+  }
+  return [recent, add]
+}
+
 export default function Home({ user }) {
   const [question, setQuestion] = useState('')
   const [exchanges, setExchanges] = useState([])
   const [loading, setLoading] = useState(false)
   const [showMobilePrompts, setShowMobilePrompts] = useState(false)
+  const [recentQueries, addToRecent] = useRecentQueries()
   const textareaRef = useRef(null)
   const chatScrollRef = useRef(null)
 
@@ -234,6 +267,7 @@ export default function Home({ user }) {
       })
       const data = await res.json()
       const elapsed = ((Date.now() - start) / 1000).toFixed(1)
+      if (!data.error) addToRecent(trimmed)
       setExchanges(prev => [
         ...prev.slice(0, -1),
         { ...prev[prev.length - 1], elapsed, sql: data.sql, rows: data.rows || [], explanation: data.explanation || null, error: data.error || null, queryLogId: data.queryLogId || null },
@@ -276,10 +310,24 @@ export default function Home({ user }) {
 
       <div className="app-shell">
         <aside className="prompt-rail">
-          <div className="rail-head">Example queries</div>
           <div className="rail-list">
-            {SUGGESTED_PROMPTS.map(p => (
-              <button key={p} className="rail-prompt" onClick={() => handlePrompt(p)}>{p}</button>
+            <div className="rail-section-head">Recent queries</div>
+            {recentQueries.length === 0 ? (
+              <p className="rail-empty">Your successful queries will appear here.</p>
+            ) : (
+              recentQueries.map(p => (
+                <button key={p} className="rail-prompt" onClick={() => handlePrompt(p)}>{p}</button>
+              ))
+            )}
+
+            <div className="rail-section-head" style={{ marginTop: 8 }}>Examples</div>
+            {EXAMPLE_GROUPS.map(group => (
+              <div key={group.label} className="rail-group">
+                <div className="rail-group-label">{group.label}</div>
+                {group.prompts.map(p => (
+                  <button key={p} className="rail-prompt" onClick={() => handlePrompt(p)}>{p}</button>
+                ))}
+              </div>
             ))}
           </div>
           <div className="rail-schema">
@@ -315,8 +363,21 @@ export default function Home({ user }) {
           <div className="chat-bar">
             {showMobilePrompts && (
               <div className="mobile-prompts">
-                {SUGGESTED_PROMPTS.map(p => (
-                  <button key={p} className="rail-prompt" onClick={() => { handlePrompt(p); setShowMobilePrompts(false) }}>{p}</button>
+                {recentQueries.length > 0 && (
+                  <>
+                    <div className="rail-section-head">Recent</div>
+                    {recentQueries.map(p => (
+                      <button key={p} className="rail-prompt" onClick={() => { handlePrompt(p); setShowMobilePrompts(false) }}>{p}</button>
+                    ))}
+                  </>
+                )}
+                {EXAMPLE_GROUPS.map(group => (
+                  <div key={group.label} className="rail-group">
+                    <div className="rail-group-label">{group.label}</div>
+                    {group.prompts.map(p => (
+                      <button key={p} className="rail-prompt" onClick={() => { handlePrompt(p); setShowMobilePrompts(false) }}>{p}</button>
+                    ))}
+                  </div>
                 ))}
               </div>
             )}
