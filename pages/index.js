@@ -173,20 +173,36 @@ function formatValue(v) {
 function isNumeric(v) { return typeof v === 'number' }
 
 function ResultTable({ rows }) {
+  const wrapRef = useRef(null)
+  const [overflows, setOverflows] = useState(false)
+
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const check = () => setOverflows(el.scrollWidth > el.clientWidth + 4)
+    check()
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [rows])
+
   if (!rows || rows.length === 0) return <p style={{ color: 'var(--ink-faint)', fontSize: 14 }}>No rows returned.</p>
   const cols = Object.keys(rows[0])
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table>
-        <thead>
-          <tr>{cols.map(c => <th key={c} className={isNumeric(rows[0][c]) ? 'num' : ''}>{c.replace(/_/g, ' ')}</th>)}</tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i}>{cols.map(c => <td key={c} className={isNumeric(row[c]) ? 'num' : ''}>{formatValue(row[c])}</td>)}</tr>
-          ))}
-        </tbody>
-      </table>
+    <div>
+      <div ref={wrapRef} style={{ overflowX: 'auto' }}>
+        <table>
+          <thead>
+            <tr>{cols.map(c => <th key={c} className={isNumeric(rows[0][c]) ? 'num' : ''}>{c.replace(/_/g, ' ')}</th>)}</tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={i}>{cols.map(c => <td key={c} className={isNumeric(row[c]) ? 'num' : ''}>{formatValue(row[c])}</td>)}</tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {overflows && <div className="scroll-hint">← scroll →</div>}
     </div>
   )
 }

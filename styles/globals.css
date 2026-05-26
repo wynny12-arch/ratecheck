@@ -358,6 +358,14 @@ body {
   white-space: nowrap;
 }
 
+.scroll-hint {
+  font: 500 11px/1 "Inter", sans-serif;
+  color: var(--ink-faint);
+  text-align: center;
+  padding: 6px 0 2px;
+  letter-spacing: 0.04em;
+}
+
 .finding-meta { display: flex; align-items: center; gap: 16px; font-size: 13px; flex-wrap: wrap; }
 .signal {
   display: inline-flex;

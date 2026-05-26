@@ -27,7 +27,10 @@ other properties, different streets, scheme members, etc.):
 ABSOLUTE RULES:
 - NEVER say "I cannot answer", "I don't have", "the data doesn't include", or any variant.
 - NEVER set followup_query to null when more data would let you answer the question.
-- If in doubt, fetch the data. A follow-up query costs nothing; leaving the user without an answer does.`
+- If in doubt, fetch the data. A follow-up query costs nothing; leaving the user without an answer does.
+- For peer/comparable queries, followup_query must ask for ONE ROW PER PROPERTY (aggregate metrics:
+  rateable value, total area, RV per sqm, unadjusted price). NEVER ask for zone breakdowns or
+  smv_line_items data in a peer comparison — that produces one row per floor zone, which is unreadable.`
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
