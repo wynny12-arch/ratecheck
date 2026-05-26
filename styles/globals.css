@@ -523,6 +523,32 @@ details.sql pre {
 .followup-send:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); background: #fff; }
 .followup-send:disabled { opacity: 0.45; cursor: default; }
 
+.followup-suggestions { margin: 8px 0 14px; }
+.followup-suggestions-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-bottom: 7px;
+}
+.followup-suggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--paper-soft);
+  border: 1px solid var(--rule);
+  border-left: 2px solid var(--accent);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font: 13px/1.4 "Inter", sans-serif;
+  color: var(--ink-soft);
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: all 120ms;
+}
+.followup-suggestion:hover { background: var(--accent-tint); color: var(--ink); border-color: var(--accent); }
+
 /* ── Responsive ───────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
