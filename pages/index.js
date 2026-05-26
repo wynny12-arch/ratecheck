@@ -59,6 +59,59 @@ function ResultTable({ rows }) {
   )
 }
 
+function FollowUpThread({ item }) {
+  const [messages, setMessages] = useState([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function send() {
+    const text = input.trim()
+    if (!text || loading) return
+    const next = [...messages, { role: 'user', content: text }]
+    setMessages(next)
+    setInput('')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context: { question: item.question, rows: item.rows, explanation: item.explanation },
+          messages: next,
+        }),
+      })
+      const data = await res.json()
+      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+    } catch (err) {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong.' }])
+    }
+    setLoading(false)
+  }
+
+  if (!item.rows?.length && !item.explanation) return null
+
+  return (
+    <div className="followup">
+      {messages.map((m, i) => (
+        <div key={i} className={`followup-msg followup-${m.role}`}>
+          {m.content}
+        </div>
+      ))}
+      {loading && <div className="followup-msg followup-assistant followup-loading">Thinking…</div>}
+      <div className="followup-row">
+        <input
+          className="followup-input"
+          placeholder="Ask a follow-up about this result…"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') send() }}
+        />
+        <button className="followup-send" onClick={send} disabled={loading || !input.trim()}>Ask</button>
+      </div>
+    </div>
+  )
+}
+
 function Exchange({ item, onFeedback }) {
   const [thumbs, setThumbs] = useState(null)
   const [comment, setComment] = useState('')
@@ -138,6 +191,8 @@ function Exchange({ item, onFeedback }) {
           <pre>{item.sql}</pre>
         </details>
       )}
+
+      <FollowUpThread item={item} />
     </div>
   )
 }
