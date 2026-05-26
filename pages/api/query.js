@@ -79,7 +79,17 @@ When a question names a specific property (e.g. "225 Monton Road", "43 High Stre
 - Compare it only against properties sharing the same primary_description_code prefix
   (first 2 characters) and the same postcode_area — never against unrelated property types.
 - Do not use numeric values mentioned in the question (m², £/m²) as filter or join criteria;
-  fetch those values from the database instead.`
+  fetch those values from the database instead.
+
+For valuation breakdown / "how is the RV calculated" queries joining smv_line_items:
+- Select only the line-item columns: floor_description, description, area, price, value.
+  Do NOT repeat property-level fields (assessment_reference, street, postcode, firm_name,
+  primary_description_text, total_area_or_units, unit_of_measurement, unadjusted_price)
+  on every line-item row — those are the same for every row and clutter the result.
+- Never select two columns that belong together as a pair (e.g. total_area_or_units and
+  unit_of_measurement, or unadjusted_price and floor_description) without an explicit
+  separator or concatenation — adjacent numeric+text columns display as garbled strings.
+- Order line items by line_number ASC.`
 
 const SYSTEM_EXPLAIN = `You are a chartered surveyor's research assistant.
 Given a question and query results from a VOA business rates database, write 2–3 sentences of plain-English findings.
