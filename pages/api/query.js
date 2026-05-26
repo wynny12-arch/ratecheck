@@ -92,7 +92,8 @@ async function generateSql(question, retry = null) {
     system: SYSTEM_SQL,
     messages: [{ role: 'user', content }],
   })
-  return msg.content[0].text.trim()
+  // Strip trailing semicolons — the model adds them occasionally
+  return msg.content[0].text.trim().replace(/;\s*$/, '')
 }
 
 async function generateExplanation(question, rows) {
