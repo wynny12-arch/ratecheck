@@ -191,7 +191,7 @@ function ResultTable({ rows }) {
   )
 }
 
-function FollowUpThread({ item, onSuggest }) {
+function FollowUpThread({ item, onRunQuery }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -205,8 +205,7 @@ function FollowUpThread({ item, onSuggest }) {
     const text = input.trim()
     if (!text || loading) return
     const apiMessages = messages.map(m => ({ role: m.role, content: m.content }))
-    const next = [...messages, { role: 'user', content: text, suggestions: [] }]
-    setMessages(next)
+    setMessages(prev => [...prev, { role: 'user', content: text }])
     setInput('')
     setLoading(true)
     try {
@@ -219,9 +218,12 @@ function FollowUpThread({ item, onSuggest }) {
         }),
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply, suggestions: data.suggestions || [] }])
+      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
+      if (data.followup_query) {
+        onRunQuery(data.followup_query)
+      }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong.', suggestions: [] }])
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong.' }])
     }
     setLoading(false)
   }
@@ -231,17 +233,7 @@ function FollowUpThread({ item, onSuggest }) {
   return (
     <div className="followup">
       {messages.map((m, i) => (
-        <div key={i}>
-          <div className={`followup-msg followup-${m.role}`}>{m.content}</div>
-          {m.suggestions && m.suggestions.length > 0 && (
-            <div className="followup-suggestions">
-              <div className="followup-suggestions-label">Run a new query</div>
-              {m.suggestions.map((s, j) => (
-                <button key={j} className="followup-suggestion" onClick={() => onSuggest(s)}>{s}</button>
-              ))}
-            </div>
-          )}
-        </div>
+        <div key={i} className={`followup-msg followup-${m.role}`}>{m.content}</div>
       ))}
       {loading && <div className="followup-msg followup-assistant followup-loading">Thinking…</div>}
       <div className="followup-row">
@@ -253,7 +245,7 @@ function FollowUpThread({ item, onSuggest }) {
   )
 }
 
-function Exchange({ item, onSuggest }) {
+function Exchange({ item, onSuggest, onRunQuery }) {
   const [thumbs, setThumbs] = useState(null)
   const [comment, setComment] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -311,7 +303,7 @@ function Exchange({ item, onSuggest }) {
         </details>
       )}
 
-      <FollowUpThread item={item} onSuggest={onSuggest} />
+      <FollowUpThread item={item} onRunQuery={onRunQuery} />
     </div>
   )
 }
@@ -450,7 +442,7 @@ export default function Home({ user }) {
                   <p>Ask a question of the Greater Manchester business rates data.<br />Use the icons on the left to browse examples or check the schema.</p>
                 </div>
               )}
-              {exchanges.map((ex, i) => <Exchange key={i} item={ex} onSuggest={handlePrompt} />)}
+              {exchanges.map((ex, i) => <Exchange key={i} item={ex} onSuggest={handlePrompt} onRunQuery={runQuery} />)}
             </div>
           </div>
 
