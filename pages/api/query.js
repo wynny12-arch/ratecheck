@@ -93,10 +93,11 @@ When a question names a specific property (e.g. "225 Monton Road", "43 High Stre
   fetch those values from the database instead.
 
 For valuation breakdown / "how is the RV calculated" queries joining smv_line_items:
-- Select only the line-item columns: floor_description, description, area, price, value.
-  Do NOT repeat property-level fields (assessment_reference, street, postcode, firm_name,
-  primary_description_text, total_area_or_units, unit_of_measurement, unadjusted_price)
-  on every line-item row — those are the same for every row and clutter the result.
+- Select ONLY: floor_description, description, area, price, value — nothing else.
+  This applies whether the property is found by name, postcode, or assessment_reference.
+  NEVER select property-level fields (assessment_reference, street, postcode, firm_name,
+  primary_description_text, total_area_or_units, unit_of_measurement, unadjusted_price,
+  adopted_rv) alongside line-item rows — they are identical on every row and waste columns.
 - Never select two columns that belong together as a pair (e.g. total_area_or_units and
   unit_of_measurement, or unadjusted_price and floor_description) without an explicit
   separator or concatenation — adjacent numeric+text columns display as garbled strings.

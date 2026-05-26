@@ -310,7 +310,7 @@ textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent
   margin-bottom: 10px;
   font-weight: 500;
 }
-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+table { width: 100%; min-width: max-content; border-collapse: collapse; font-size: 14px; }
 thead { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
 th {
   text-align: left;
@@ -320,6 +320,7 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 10px 12px 10px 0;
+  white-space: nowrap;
 }
 th.num, td.num { text-align: right; padding-right: 0; padding-left: 16px; font-variant-numeric: tabular-nums; }
 td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--rule-soft); }
