@@ -104,10 +104,20 @@ For valuation breakdown / "how is the RV calculated" queries joining smv_line_it
 - Order line items by line_number ASC.`
 
 const SYSTEM_EXPLAIN = `You are a chartered surveyor's research assistant.
-Given a question and query results from a VOA business rates database, write 2–3 sentences of plain-English findings.
-Be specific: name properties, quote numbers, state what is anomalous and by how much.
-Put the key assertion in bold. End with whether the surveyor should investigate further.
-Plain text only — no markdown, no hedging phrases like "it's worth noting"."Worth reviewing" means a genuine anomaly exists in the data.`
+Given a question and query results from a VOA business rates database, return ONLY valid JSON in this exact format:
+{
+  "finding": "2–3 sentences of plain-English findings. Be specific: name properties, quote numbers, state what is anomalous and by how much. Use **bold** for the key assertion. End with whether the surveyor should investigate further. No hedging phrases.",
+  "signals": ["signal 1", "signal 2", "signal 3"]
+}
+
+Signals are 3–6 short evidence statements (under 10 words each) grounded strictly in the data:
+- Quantitative comparisons: "+47% above street median", "£215/sqm vs £390/sqm peers"
+- Sample size: "18 comparables analysed", "4-property parade"
+- Anomaly flags: "Zone A depth above typical range", "Single-rate vs zoned methodology"
+- Relative position: "2nd highest RV/sqm on parade", "Below lower quartile"
+- Data quality: "1 comparable only — low confidence", "Strong comparable density"
+
+Do not invent numbers not in the results. Return only the JSON object — no markdown fences, no other text.`
 
 const BANNED = /\b(DROP|DELETE|INSERT|UPDATE|ALTER|TRUNCATE|CREATE|GRANT|REVOKE|COMMENT)\b/i
 const MULTI_STMT = /;\s*\S/
@@ -141,14 +151,20 @@ async function generateExplanation(question, rows) {
   const preview = JSON.stringify(rows.slice(0, 20), null, 2)
   const msg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 512,
+    max_tokens: 768,
     system: SYSTEM_EXPLAIN,
     messages: [{
       role: 'user',
-      content: `Question: ${question}\n\n${rows.length} rows returned. First 20:\n${preview}\n\nWrite the headline finding.`,
+      content: `Question: ${question}\n\n${rows.length} rows returned. First 20:\n${preview}\n\nReturn JSON with finding and signals.`,
     }],
   })
-  return msg.content[0].text.trim()
+  const text = msg.content[0].text.trim()
+  try {
+    const parsed = JSON.parse(text)
+    return { explanation: parsed.finding || text, signals: Array.isArray(parsed.signals) ? parsed.signals : [] }
+  } catch {
+    return { explanation: text, signals: [] }
+  }
 }
 
 function isAnalytical(question) {
@@ -171,6 +187,7 @@ export default async function handler(req, res) {
   let sql = null
   let rows = []
   let explanation = null
+  let signals = []
   let succeeded = false
   let errorMessage = null
 
@@ -198,7 +215,9 @@ export default async function handler(req, res) {
     succeeded = true
 
     if (rows.length > 0 && rows.length <= 200 && isAnalytical(question)) {
-      explanation = await generateExplanation(question, rows)
+      const result = await generateExplanation(question, rows)
+      explanation = result.explanation
+      signals = result.signals
     }
 
   } catch (err) {
@@ -213,7 +232,7 @@ export default async function handler(req, res) {
     await pool.query(
       `INSERT INTO query_log (user_email, question, generated_sql, row_count, succeeded, error_message, explanation)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [session.user.email, question, sql, rows.length, succeeded, errorMessage, explanation]
+      [session.user.email, question, sql, rows.length, succeeded, errorMessage, explanation || null]
     )
   } catch (logErr) {
     console.error('query_log write failed:', logErr.message)
@@ -223,5 +242,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: errorMessage, sql })
   }
 
-  return res.status(200).json({ sql, rows, explanation, rowCount: rows.length })
+  return res.status(200).json({ sql, rows, explanation, signals, rowCount: rows.length })
 }

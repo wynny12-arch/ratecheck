@@ -258,6 +258,11 @@ function Exchange({ item }) {
         <div className="finding">
           <div className="finding-label">Headline finding</div>
           <p className="finding-text" dangerouslySetInnerHTML={{ __html: item.explanation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+          {item.signals && item.signals.length > 0 && (
+            <div className="evidence-strip">
+              {item.signals.map((s, i) => <span key={i} className="evidence-chip">{s}</span>)}
+            </div>
+          )}
           <div className="finding-meta">
             <span className="signal">Worth reviewing</span>
             {!submitted && (
@@ -335,7 +340,7 @@ export default function Home({ user }) {
       const data = await res.json()
       const elapsed = ((Date.now() - start) / 1000).toFixed(1)
       if (!data.error) addToRecent(trimmed)
-      setExchanges(prev => [...prev.slice(0, -1), { ...prev[prev.length - 1], elapsed, sql: data.sql, rows: data.rows || [], explanation: data.explanation || null, error: data.error || null, queryLogId: data.queryLogId || null }])
+      setExchanges(prev => [...prev.slice(0, -1), { ...prev[prev.length - 1], elapsed, sql: data.sql, rows: data.rows || [], explanation: data.explanation || null, signals: data.signals || [], error: data.error || null, queryLogId: data.queryLogId || null }])
     } catch (err) {
       setExchanges(prev => [...prev.slice(0, -1), { ...prev[prev.length - 1], error: err.message, elapsed: ((Date.now() - start) / 1000).toFixed(1) }])
     }
