@@ -121,6 +121,7 @@ body {
   gap: 48px;
   padding: 40px 0 80px;
 }
+.workspace > section { min-width: 0; }
 
 .console-head {
   display: flex;
