@@ -53,7 +53,14 @@ Notes:
 - primary_description_code prefix: CS=retail shops, CO=offices, CF=factories/warehouses
 - £/m² (price, unadjusted_price) are Zone A equivalents for shops
 - postcode_area examples: M1, M6, M30, M60, SK1, OL4, BL1, WN3
-- Window functions (percentile_cont, OVER, PARTITION BY) are available
+- Window functions (OVER, PARTITION BY, ROW_NUMBER, RANK, LAG, LEAD) are available
+- percentile_cont is an ordered-set aggregate, NOT a window function. Correct syntax:
+    percentile_cont(0.5) WITHIN GROUP (ORDER BY column)
+  For partitioned medians, use a subquery or CTE, e.g.:
+    WITH medians AS (
+      SELECT street, percentile_cont(0.5) WITHIN GROUP (ORDER BY rateable_value) AS median_rv
+      FROM list_entries GROUP BY street
+    ) SELECT ... FROM list_entries JOIN medians USING (street)
 `.trim()
 
 const SYSTEM_SQL = `You are a SQL expert generating queries for a UK VOA business rates database.
