@@ -1,13 +1,28 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 import Head from 'next/head'
 
 const SUGGESTED_PROMPTS = [
   'Show me how the RV is calculated for 225 Monton Road',
-  'Show the full valuation breakdown for 225 Monton Road',
-  'How does 225 Monton Road\'s rateable value compare to other retail shops in M30?',
-  'Find retail shops in M30 paying significantly more per sqm than the street median',
-  'What\'s the tariff range across all parades with 10+ retail properties in M30?',
+  'Show the full valuation breakdown for assessment reference 30773892000',
+  'What properties are at postcode M30 9LF?',
+  'Is 225 Monton Road\'s RV in line with peers on Monton Road?',
+  'Compare the unadjusted price per sqm for CS shops in M30',
+  'Find retail shops in M30 where RV per sqm is above the street median',
+  'List the 20 highest RV retail properties in Stockport',
+  'Which offices in M1 have a rateable value above £100,000?',
+  'What scheme reference is used for 225 Monton Road?',
+  'List all CS assessments on the same scheme as 225 Monton Road',
+  'Find all retail shops on Deansgate Manchester with their RVs',
+  'What are the top 10 highest rateable values in M41?',
+  'Find warehouse properties in BL1 with rateable value above £50,000',
+  'Compare Zone A rates across retail shops in Oldham town centre',
+  'Which properties on Monton Road have the highest RV per sqm?',
+  'What is the median RV for offices in Salford M5?',
+  'Show all shop properties on Market Street Manchester',
+  'Find properties in WN1 where adopted RV differs from the calculated value',
+  'How many CS retail shops are there in each M postcode area?',
+  'Show all play centres and leisure facilities in Greater Manchester',
 ]
 
 function formatValue(v) {
@@ -82,7 +97,7 @@ function FollowUpThread({ item }) {
       })
       const data = await res.json()
       setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
-    } catch (err) {
+    } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong.' }])
     }
     setLoading(false)
@@ -93,9 +108,7 @@ function FollowUpThread({ item }) {
   return (
     <div className="followup">
       {messages.map((m, i) => (
-        <div key={i} className={`followup-msg followup-${m.role}`}>
-          {m.content}
-        </div>
+        <div key={i} className={`followup-msg followup-${m.role}`}>{m.content}</div>
       ))}
       {loading && <div className="followup-msg followup-assistant followup-loading">Thinking…</div>}
       <div className="followup-row">
@@ -112,7 +125,7 @@ function FollowUpThread({ item }) {
   )
 }
 
-function Exchange({ item, onFeedback }) {
+function Exchange({ item }) {
   const [thumbs, setThumbs] = useState(null)
   const [comment, setComment] = useState('')
   const [submitted, setSubmitted] = useState(false)
@@ -134,12 +147,10 @@ function Exchange({ item, onFeedback }) {
     <div className="exchange">
       <p className="question">{item.question}</p>
       <div className="question-meta">
-        Run · {timeStr} · {item.elapsed ? `${item.elapsed}s` : '…'}
+        {item.elapsed ? `${item.elapsed}s · ${timeStr}` : `Running · ${timeStr}`}
       </div>
 
-      {item.error && (
-        <div className="error-block">{item.error}</div>
-      )}
+      {item.error && <div className="error-block">{item.error}</div>}
 
       {item.explanation && (
         <div className="finding">
@@ -154,16 +165,8 @@ function Exchange({ item, onFeedback }) {
             <span className="signal">Worth reviewing</span>
             {!submitted && (
               <div className="feedback-row">
-                <button
-                  className={`feedback-btn${thumbs === true ? ' active' : ''}`}
-                  onClick={() => submitFeedback(true)}
-                  title="Useful"
-                >↑</button>
-                <button
-                  className={`feedback-btn${thumbs === false ? ' active' : ''}`}
-                  onClick={() => submitFeedback(false)}
-                  title="Not useful"
-                >↓</button>
+                <button className={`feedback-btn${thumbs === true ? ' active' : ''}`} onClick={() => submitFeedback(true)} title="Useful">↑</button>
+                <button className={`feedback-btn${thumbs === false ? ' active' : ''}`} onClick={() => submitFeedback(false)} title="Not useful">↓</button>
                 <input
                   className="feedback-comment"
                   placeholder="What would have made this useful?"
@@ -197,11 +200,18 @@ function Exchange({ item, onFeedback }) {
   )
 }
 
-export default function Home({ user, hereditamentCount }) {
+export default function Home({ user }) {
   const [question, setQuestion] = useState('')
   const [exchanges, setExchanges] = useState([])
   const [loading, setLoading] = useState(false)
   const textareaRef = useRef(null)
+  const chatScrollRef = useRef(null)
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    }
+  }, [exchanges])
 
   async function runQuery(q) {
     const trimmed = q.trim()
@@ -213,7 +223,7 @@ export default function Home({ user, hereditamentCount }) {
       timestamp: new Date().toISOString(),
       elapsed: null, sql: null, rows: null, explanation: null, error: null, queryLogId: null,
     }
-    setExchanges(prev => [pending, ...prev])
+    setExchanges(prev => [...prev, pending])
 
     try {
       const res = await fetch('/api/query', {
@@ -223,17 +233,15 @@ export default function Home({ user, hereditamentCount }) {
       })
       const data = await res.json()
       const elapsed = ((Date.now() - start) / 1000).toFixed(1)
-      setExchanges(prev => [{
-        ...prev[0],
-        elapsed,
-        sql: data.sql,
-        rows: data.rows || [],
-        explanation: data.explanation || null,
-        error: data.error || null,
-        queryLogId: data.queryLogId || null,
-      }, ...prev.slice(1)])
+      setExchanges(prev => [
+        ...prev.slice(0, -1),
+        { ...prev[prev.length - 1], elapsed, sql: data.sql, rows: data.rows || [], explanation: data.explanation || null, error: data.error || null, queryLogId: data.queryLogId || null },
+      ])
     } catch (err) {
-      setExchanges(prev => [{ ...prev[0], error: err.message, elapsed: ((Date.now() - start) / 1000).toFixed(1) }, ...prev.slice(1)])
+      setExchanges(prev => [
+        ...prev.slice(0, -1),
+        { ...prev[prev.length - 1], error: err.message, elapsed: ((Date.now() - start) / 1000).toFixed(1) },
+      ])
     }
     setLoading(false)
     setQuestion('')
@@ -248,8 +256,6 @@ export default function Home({ user, hereditamentCount }) {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) runQuery(question)
   }
 
-  const count = hereditamentCount ? hereditamentCount.toLocaleString() : '—'
-
   return (
     <>
       <Head>
@@ -262,148 +268,71 @@ export default function Home({ user, hereditamentCount }) {
           <div className="wordmark">RateCheck<em> · research console</em></div>
           <div className="masthead-meta">
             <span>Greater Manchester pilot</span>
-            <span>{count} hereditaments loaded</span>
-            <a href="#schema">Schema</a>
+            <span>123,719 hereditaments</span>
           </div>
         </div>
       </header>
 
-      <div className="shell">
-        <section className="banner">
-          <div>
-            <div className="banner-eyebrow">VOA business rates intelligence · prototype</div>
-            <h1>Ask in English. <em>See the evidence.</em></h1>
-            <p className="banner-lede">
-              A research tool for chartered surveyors. Plain questions become SQL against
-              the published rating list; the answer comes with the working shown.
-            </p>
+      <div className="app-shell">
+        <aside className="prompt-rail">
+          <div className="rail-head">Example queries</div>
+          <div className="rail-list">
+            {SUGGESTED_PROMPTS.map(p => (
+              <button key={p} className="rail-prompt" onClick={() => handlePrompt(p)}>{p}</button>
+            ))}
           </div>
-          <div className="banner-stats">
-            <div className="stat">
-              <div className="stat-label">Hereditaments</div>
-              <div className="stat-figure">{count}</div>
-              <div className="stat-note">Greater Manchester corpus</div>
-            </div>
-            <div className="stat">
-              <div className="stat-label">Postcode areas</div>
-              <div className="stat-figure">5</div>
-              <div className="stat-note">M · SK · OL · BL · WN</div>
-            </div>
-            <div className="stat">
-              <div className="stat-label">Tables</div>
-              <div className="stat-figure">3</div>
-              <div className="stat-note">VOA rating list schema</div>
+          <div className="rail-schema">
+            <div className="rail-schema-title">Schema</div>
+            <div className="rail-schema-body">
+              <span className="rail-tbl">list_entries</span>
+              <span className="rail-cols"> assessment_reference · postcode · street · primary_description_code · rateable_value</span>
+              <br /><br />
+              <span className="rail-tbl">smv_assessments</span>
+              <span className="rail-cols"> total_area_or_units · unadjusted_price · unit_of_measurement · adopted_rv</span>
+              <br /><br />
+              <span className="rail-tbl">smv_line_items</span>
+              <span className="rail-cols"> floor_description · description · area · price · value</span>
             </div>
           </div>
-        </section>
+        </aside>
 
-        <main className="workspace">
-          <section>
-            <div className="console-head">
-              <h2 className="console-title">Research console</h2>
-              <div className="console-meta">Read-only · evidence leads, not appeal conclusions</div>
-            </div>
-
-            <div className="composer">
-              <div className="composer-label">Ask a question of the rating list.</div>
-              <div className="composer-row">
-                <textarea
-                  ref={textareaRef}
-                  value={question}
-                  onChange={e => setQuestion(e.target.value)}
-                  onKeyDown={handleKey}
-                  placeholder="e.g. Find properties paying significantly more per sqm than their parade median"
-                />
-                <button
-                  className="submit"
-                  onClick={() => runQuery(question)}
-                  disabled={loading || !question.trim()}
-                >
-                  {loading ? 'Running…' : 'Run query'}
-                </button>
-              </div>
-            </div>
-
-            <div className="prompts">
-              {SUGGESTED_PROMPTS.map(p => (
-                <button key={p} className="prompt" onClick={() => handlePrompt(p)}>{p}</button>
+        <div className="chat-panel">
+          <div className="chat-scroll" ref={chatScrollRef}>
+            <div className="chat-content">
+              {exchanges.length === 0 && (
+                <div className="chat-empty">
+                  <div className="chat-empty-title">VOA rating list research</div>
+                  <p>Ask a question of the Greater Manchester business rates data.<br />Select an example from the left or type your own below.</p>
+                </div>
+              )}
+              {exchanges.map((ex, i) => (
+                <Exchange key={i} item={ex} />
               ))}
             </div>
+          </div>
 
-            {exchanges.map((ex, i) => (
-              <Exchange key={i} item={ex} />
-            ))}
-          </section>
-
-          <aside className="sidebar">
-            <div className="side-section">
-              <h3>What the AI checks</h3>
-              <p>Every answer is grounded in the rating-list tables. The SQL is exposed so the working can be inspected.</p>
-              <ul className="side-list">
-                <li>
-                  <b>Comparable context</b>
-                  <span>Neighbours, parade peers, postcode and scheme references.</span>
-                </li>
-                <li>
-                  <b>£/sqm pressure</b>
-                  <span>Outliers against street and scheme medians.</span>
-                </li>
-                <li>
-                  <b>Zoning evidence</b>
-                  <span>Zone A / B / C breakdowns from summary valuation line items.</span>
-                </li>
-              </ul>
+          <div className="chat-bar">
+            <div className="chat-bar-inner">
+              <textarea
+                ref={textareaRef}
+                className="chat-textarea"
+                value={question}
+                onChange={e => setQuestion(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder="Ask a question of the rating list…"
+                rows={2}
+              />
+              <button
+                className="chat-submit"
+                onClick={() => runQuery(question)}
+                disabled={loading || !question.trim()}
+              >
+                {loading ? 'Running…' : 'Run'}
+              </button>
             </div>
-
-            <div className="side-section">
-              <h3>What this is not</h3>
-              <ul className="side-list">
-                <li>
-                  <b>Not an appeal recommendation</b>
-                  <span>Anomalies are leads for surveyor review.</span>
-                </li>
-                <li>
-                  <b>Not rental evidence</b>
-                  <span>The platform sees the list, not the market.</span>
-                </li>
-                <li>
-                  <b>Not measurement</b>
-                  <span>Floor areas come from VOA records, not site survey.</span>
-                </li>
-              </ul>
-            </div>
-
-            <div id="schema" className="side-section">
-              <h3>Schema</h3>
-              <div className="schema">
-                <span className="tbl">list_entries</span>{'\n'}
-                {'  '}<span className="col">assessment_reference</span>{'\n'}
-                {'  '}<span className="col">uarn</span>{'\n'}
-                {'  '}<span className="col">postcode · street</span>{'\n'}
-                {'  '}<span className="col">primary_description_code</span>{'\n'}
-                {'  '}<span className="col">rateable_value</span>{'\n'}
-                {'\n'}
-                <span className="tbl">smv_assessments</span>{'\n'}
-                {'  '}<span className="col">assessment_reference</span>{'\n'}
-                {'  '}<span className="col">total_area_or_units</span>{'\n'}
-                {'  '}<span className="col">unadjusted_price</span>{'\n'}
-                {'  '}<span className="col">scheme_reference</span>{'\n'}
-                {'\n'}
-                <span className="tbl">smv_line_items</span>{'\n'}
-                {'  '}<span className="col">assessment_reference</span>{'\n'}
-                {'  '}<span className="col">floor_description</span>{'\n'}
-                {'  '}<span className="col">description · area · price</span>
-              </div>
-            </div>
-          </aside>
-        </main>
-
-        <footer className="colophon">
-          <strong>Prototype note</strong>
-          Figures are drawn directly from the VOA compiled rating list for Greater Manchester.
-          The AI generates SQL only — answers come from the database, not the model.
-          All outputs are intended for review by a qualified rating surveyor before any appeal action.
-        </footer>
+            <div className="chat-hint">⌘ Enter to run · read-only · evidence leads, not appeal conclusions</div>
+          </div>
+        </div>
       </div>
     </>
   )
@@ -412,10 +341,6 @@ export default function Home({ user, hereditamentCount }) {
 export async function getServerSideProps({ req, res }) {
   const supabase = createPagesServerClient({ req, res })
   const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
-    return { redirect: { destination: '/login', permanent: false } }
-  }
-
-  return { props: { user: session.user, hereditamentCount: null } }
+  if (!session) return { redirect: { destination: '/login', permanent: false } }
+  return { props: { user: session.user } }
 }
