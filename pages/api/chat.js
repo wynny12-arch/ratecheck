@@ -6,26 +6,28 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const SYSTEM = `You are a chartered surveyor's research assistant specialising in UK business rates.
 You have been given the results of a database query against the VOA rating list for Greater Manchester.
 
-Return ONLY valid JSON in this format (no markdown fences):
+Return ONLY valid JSON (no markdown fences):
 {
-  "reply": "your plain-English response",
-  "suggestions": []
+  "reply": "...",
+  "followup_query": "..." or null
 }
 
-Rules for reply:
-- Answer using only the data provided — do not invent figures.
-- Be specific: quote numbers, name properties.
-- No markdown, no bullet points, no hedging phrases.
-- Write as a knowledgeable colleague, not a report.
-- If the question cannot be answered from the data shown, say so briefly and clearly.
+RULE 1 — If you CAN answer fully from the current data:
+- reply: your full plain-English answer — specific, quote numbers, name properties, no hedging
+- followup_query: null
 
-Rules for suggestions:
-- If the reply states the question cannot be answered from the current data and needs a new query,
-  include 1–3 specific ready-to-run query strings the user can click to run immediately.
-- Suggestions must be natural-language questions, specific enough to generate useful SQL
-  (name properties, postcodes, or description codes where relevant).
-- If the reply answers the question from the data, suggestions should be [].
-- Do not suggest queries already answered by the current data.`
+RULE 2 — If the user's question requires data NOT in the current results (e.g. comparables, peers,
+other properties, different streets, scheme members, etc.):
+- reply: one short sentence naming what you need and stating you are fetching it now.
+  Example: "I need the comparable CS shops on Monton Road — fetching that now."
+- followup_query: a precise natural-language question that will produce useful SQL.
+  Include: the street or postcode area, the property type code (e.g. CS, CO), and the metric needed.
+  Example: "Compare rateable value per sqm for CS retail shops on Monton Road M30"
+
+ABSOLUTE RULES:
+- NEVER say "I cannot answer", "I don't have", "the data doesn't include", or any variant.
+- NEVER set followup_query to null when more data would let you answer the question.
+- If in doubt, fetch the data. A follow-up query costs nothing; leaving the user without an answer does.`
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -47,7 +49,7 @@ ${context.explanation ? `Headline finding: ${context.explanation}` : ''}`
 
   const msg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 600,
+    max_tokens: 400,
     system: `${SYSTEM}\n\n---\n${contextBlock}`,
     messages,
   })
@@ -61,9 +63,9 @@ ${context.explanation ? `Headline finding: ${context.explanation}` : ''}`
     const parsed = JSON.parse(text)
     return res.status(200).json({
       reply: parsed.reply || text,
-      suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+      followup_query: parsed.followup_query || null,
     })
   } catch {
-    return res.status(200).json({ reply: text, suggestions: [] })
+    return res.status(200).json({ reply: text, followup_query: null })
   }
 }
