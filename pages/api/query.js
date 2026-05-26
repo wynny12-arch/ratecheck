@@ -159,6 +159,9 @@ async function generateExplanation(question, rows) {
     }],
   })
   const text = msg.content[0].text.trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```\s*$/, '')
+    .trim()
   try {
     const parsed = JSON.parse(text)
     return { explanation: parsed.finding || text, signals: Array.isArray(parsed.signals) ? parsed.signals : [] }
