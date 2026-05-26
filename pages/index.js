@@ -204,6 +204,7 @@ export default function Home({ user }) {
   const [question, setQuestion] = useState('')
   const [exchanges, setExchanges] = useState([])
   const [loading, setLoading] = useState(false)
+  const [showMobilePrompts, setShowMobilePrompts] = useState(false)
   const textareaRef = useRef(null)
   const chatScrollRef = useRef(null)
 
@@ -312,6 +313,13 @@ export default function Home({ user }) {
           </div>
 
           <div className="chat-bar">
+            {showMobilePrompts && (
+              <div className="mobile-prompts">
+                {SUGGESTED_PROMPTS.map(p => (
+                  <button key={p} className="rail-prompt" onClick={() => { handlePrompt(p); setShowMobilePrompts(false) }}>{p}</button>
+                ))}
+              </div>
+            )}
             <div className="chat-bar-inner">
               <textarea
                 ref={textareaRef}
@@ -330,7 +338,13 @@ export default function Home({ user }) {
                 {loading ? 'Running…' : 'Run'}
               </button>
             </div>
-            <div className="chat-hint">⌘ Enter to run · read-only · evidence leads, not appeal conclusions</div>
+            <div className="chat-hint">
+              <button className="hint-examples-btn" onClick={() => setShowMobilePrompts(v => !v)}>
+                {showMobilePrompts ? 'Hide examples' : 'Examples'}
+              </button>
+              <span className="hint-sep">·</span>
+              ⌘ Enter to run · read-only · evidence leads, not appeal conclusions
+            </div>
           </div>
         </div>
       </div>
