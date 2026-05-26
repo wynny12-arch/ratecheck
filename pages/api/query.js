@@ -75,7 +75,10 @@ Use standard PostgreSQL. Window functions are fine.
 
 When a question names a specific property (e.g. "225 Monton Road", "43 High Street Stockport"):
 - Anchor the query by looking up that property's assessment_reference, primary_description_code,
-  and postcode_area from list_entries using UPPER() string matching on street/number_or_name.
+  and postcode_area from list_entries. If the question contains a full postcode (e.g. M41 9BP),
+  filter primarily on postcode (exact match, uppercased) plus number_or_name — do NOT rely on
+  street or town matching, as VOA street names often differ from common usage. If no postcode
+  is given, use UPPER() string matching on street and number_or_name.
 - Compare it only against properties sharing the same primary_description_code prefix
   (first 2 characters) and the same postcode_area — never against unrelated property types.
 - Do not use numeric values mentioned in the question (m², £/m²) as filter or join criteria;
