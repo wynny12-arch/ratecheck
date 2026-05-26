@@ -92,8 +92,12 @@ async function generateSql(question, retry = null) {
     system: SYSTEM_SQL,
     messages: [{ role: 'user', content }],
   })
-  // Strip trailing semicolons — the model adds them occasionally
-  return msg.content[0].text.trim().replace(/;\s*$/, '')
+  // Remove line comments, then take only the first statement (model sometimes appends
+  // "-- explanation" or a second SELECT after a semicolon)
+  return msg.content[0].text.trim()
+    .replace(/--[^\n]*/g, '')  // strip SQL line comments
+    .split(/;/)[0]             // take first statement only
+    .trim()
 }
 
 async function generateExplanation(question, rows) {
