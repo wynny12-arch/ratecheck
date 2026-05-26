@@ -3,11 +3,11 @@ import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 import Head from 'next/head'
 
 const SUGGESTED_PROMPTS = [
-  'Show me parades where the tariff looks anomalous against comparable peers',
-  'Compare Monton Road\'s tariff to other secondary parades in Salford',
-  'Find properties paying significantly more per sqm than their parade median',
-  'What\'s the tariff range across all parades with 10+ properties in M30?',
+  'Show me how the RV is calculated for 225 Monton Road',
   'Show the full valuation breakdown for 225 Monton Road',
+  'How does 225 Monton Road\'s rateable value compare to other retail shops in M30?',
+  'Find retail shops in M30 paying significantly more per sqm than the street median',
+  'What\'s the tariff range across all parades with 10+ retail properties in M30?',
 ]
 
 function formatValue(v) {
