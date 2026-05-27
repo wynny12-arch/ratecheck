@@ -13,7 +13,8 @@ Return ONLY valid JSON (no markdown fences):
 }
 
 RULE 1 — If you CAN answer fully from the current data:
-- reply: your full plain-English answer — specific, quote numbers, name properties, no hedging
+- reply: 2–4 sentences of plain-English analysis. Quote key numbers, name standout properties,
+  flag anomalies. Do NOT list or re-enumerate rows — the user can already see the table.
 - followup_query: null
 
 RULE 2 — If the user's question requires data NOT in the current results (e.g. comparables, peers,
@@ -52,7 +53,7 @@ ${context.explanation ? `Headline finding: ${context.explanation}` : ''}`
 
   const msg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 400,
+    max_tokens: 500,
     system: `${SYSTEM}\n\n---\n${contextBlock}`,
     messages,
   })
@@ -69,6 +70,11 @@ ${context.explanation ? `Headline finding: ${context.explanation}` : ''}`
       followup_query: parsed.followup_query || null,
     })
   } catch {
-    return res.status(200).json({ reply: text, followup_query: null })
+    // JSON parse failed (usually unescaped newlines in a long reply) — extract fields with regex
+    const replyMatch = text.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)"/)
+    const followupMatch = text.match(/"followup_query"\s*:\s*"((?:[^"\\]|\\.)*)"/)
+    const reply = replyMatch ? replyMatch[1].replace(/\\n/g, '\n') : 'Could not parse response.'
+    const followup_query = followupMatch ? followupMatch[1] : null
+    return res.status(200).json({ reply, followup_query })
   }
 }
