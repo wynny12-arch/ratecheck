@@ -1,14 +1,9 @@
 import { Pool } from 'pg'
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL_READONLY })
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
-
-  const supabase = createPagesServerClient({ req, res })
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return res.status(401).json({ error: 'Unauthorized' })
 
   const { queryLogId, thumbsUp, comment } = req.body
   if (!queryLogId) return res.status(400).json({ error: 'queryLogId required' })

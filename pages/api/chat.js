@@ -1,5 +1,4 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -48,10 +47,6 @@ ABSOLUTE RULES:
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
-
-  const supabase = createPagesServerClient({ req, res })
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return res.status(401).json({ error: 'Unauthorized' })
 
   const { context, messages } = req.body
   if (!messages?.length) return res.status(400).json({ error: 'messages required' })

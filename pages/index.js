@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 import Head from 'next/head'
 
 const EXAMPLE_GROUPS = [
@@ -358,7 +357,7 @@ function useRecentQueries() {
 
 // ── Page ─────────────────────────────────────────────────────────────────────
 
-export default function Home({ user }) {
+export default function Home() {
   const [question, setQuestion] = useState('')
   const [exchanges, setExchanges] = useState([])
   const [loading, setLoading] = useState(false)
@@ -406,7 +405,7 @@ export default function Home({ user }) {
     setActivePanel(p => p === id ? null : id)
   }
 
-  const initial = (user?.email?.[0] || 'U').toUpperCase()
+  const initial = 'U'
 
   return (
     <>
@@ -498,9 +497,6 @@ export default function Home({ user }) {
   )
 }
 
-export async function getServerSideProps({ req, res }) {
-  const supabase = createPagesServerClient({ req, res })
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return { redirect: { destination: '/login', permanent: false } }
-  return { props: { user: session.user } }
+export async function getServerSideProps() {
+  return { props: {} }
 }

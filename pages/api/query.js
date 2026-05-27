@@ -1,6 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { Pool } from 'pg'
-import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -207,11 +206,6 @@ function isAnalytical(question) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  // Auth check
-  const supabase = createPagesServerClient({ req, res })
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) return res.status(401).json({ error: 'Unauthorized' })
-
   const { question } = req.body
   if (!question?.trim()) return res.status(400).json({ error: 'question required' })
 
@@ -270,7 +264,7 @@ export default async function handler(req, res) {
     await pool.query(
       `INSERT INTO query_log (user_email, question, generated_sql, row_count, succeeded, error_message, explanation)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [session.user.email, question, sql, rows.length, succeeded, errorMessage, explanation || null]
+      ['anonymous', question, sql, rows.length, succeeded, errorMessage, explanation || null]
     )
   } catch (logErr) {
     console.error('query_log write failed:', logErr.message)
