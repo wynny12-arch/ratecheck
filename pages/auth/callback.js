@@ -7,10 +7,29 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const supabase = createBrowserClient()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') router.replace('/')
-    })
-    return () => subscription.unsubscribe()
+
+    async function handleCallback() {
+      // Handle PKCE code exchange if present in URL
+      const code = new URLSearchParams(window.location.search).get('code')
+      if (code) {
+        await supabase.auth.exchangeCodeForSession(code)
+      }
+
+      // Check for session immediately — may already be set from URL hash
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        router.replace('/')
+        return
+      }
+
+      // Fall back to event listener for slower flows
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'SIGNED_IN') router.replace('/')
+      })
+      return () => subscription.unsubscribe()
+    }
+
+    handleCallback()
   }, [router])
 
   return (
