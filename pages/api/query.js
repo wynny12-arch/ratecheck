@@ -119,6 +119,17 @@ Signals are 3–6 short evidence statements (under 10 words each) grounded stric
 
 Do not invent numbers not in the results. Return only the JSON object — no markdown fences, no other text.`
 
+function friendlyError(err) {
+  const msg = err.message || ''
+  if (msg.includes('credit balance is too low') || err.status === 402)
+    return 'Anthropic API credits exhausted — please top up at console.anthropic.com/billing.'
+  if (err.status === 429 || msg.includes('rate limit'))
+    return 'Too many requests — please wait a moment and try again.'
+  if (err.status === 401 || msg.includes('authentication'))
+    return 'Anthropic API key invalid or missing.'
+  return msg
+}
+
 const BANNED = /\b(DROP|DELETE|INSERT|UPDATE|ALTER|TRUNCATE|CREATE|GRANT|REVOKE|COMMENT)\b/i
 const MULTI_STMT = /;\s*\S/
 
@@ -224,7 +235,7 @@ export default async function handler(req, res) {
     }
 
   } catch (err) {
-    errorMessage = err.message
+    errorMessage = friendlyError(err)
     succeeded = false
   } finally {
     client.release()

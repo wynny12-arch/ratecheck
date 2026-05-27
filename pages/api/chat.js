@@ -3,6 +3,17 @@ import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+function friendlyError(err) {
+  const msg = err.message || ''
+  if (msg.includes('credit balance is too low') || err.status === 402)
+    return 'Anthropic API credits exhausted — please top up at console.anthropic.com/billing.'
+  if (err.status === 429 || msg.includes('rate limit'))
+    return 'Too many requests — please wait a moment and try again.'
+  if (err.status === 401 || msg.includes('authentication'))
+    return 'Anthropic API key invalid or missing.'
+  return msg
+}
+
 const SYSTEM = `You are a chartered surveyor's research assistant specialising in UK business rates.
 You have been given the results of a database query against the VOA rating list for Greater Manchester.
 
@@ -53,12 +64,17 @@ ${preview}
 
 ${context.explanation ? `Headline finding: ${context.explanation}` : ''}`
 
-  const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 500,
-    system: `${SYSTEM}\n\n---\n${contextBlock}`,
-    messages,
-  })
+  let msg
+  try {
+    msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      system: `${SYSTEM}\n\n---\n${contextBlock}`,
+      messages,
+    })
+  } catch (err) {
+    return res.status(200).json({ reply: friendlyError(err), followup_query: null })
+  }
 
   const text = msg.content[0].text.trim()
     .replace(/^```(?:json)?\s*/i, '')
