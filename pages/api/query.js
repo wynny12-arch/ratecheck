@@ -75,7 +75,12 @@ const SYSTEM_SQL = `You are a SQL expert generating queries for a UK VOA busines
 
 ${SCHEMA}
 
-Return a single SELECT statement only.
+If the question is NOT answerable by querying this database — e.g. it is a general knowledge
+question about business rates, rates relief, valuation methodology, VOA processes, or a question
+about the schema/data structure — return exactly this token and nothing else:
+GENERAL_QUESTION
+
+Otherwise, return a single SELECT statement only.
 No markdown fences, no explanation, no other text — just raw SQL.
 Never use: DROP, DELETE, INSERT, UPDATE, ALTER, TRUNCATE, CREATE, GRANT, REVOKE, COMMENT.
 Never use multiple statements (no semicolons mid-query).
@@ -181,6 +186,18 @@ async function generateExplanation(question, rows) {
   }
 }
 
+async function generateGeneralAnswer(question) {
+  const msg = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 400,
+    system: `You are a chartered surveyor's assistant specialising in UK business rates.
+Answer the question in 2–4 plain-English sentences. Be specific and practical.
+No hedging, no bullet lists, no markdown — just clear prose a surveyor can act on.`,
+    messages: [{ role: 'user', content: question }],
+  })
+  return msg.content[0].text.trim()
+}
+
 function isAnalytical(question) {
   // Skip explanation for simple factual lookups
   const factual = /^(what is|what'?s|give me|show me the rv|show me the rateable value)\b/i
@@ -205,12 +222,19 @@ export default async function handler(req, res) {
   let succeeded = false
   let errorMessage = null
 
+  // Check if this is a general knowledge question before touching the DB
   const client = await pool.connect()
   try {
-    // Set query timeout at session level
     await client.query('SET statement_timeout = 10000')
 
     sql = await generateSql(question)
+
+    if (sql === 'GENERAL_QUESTION') {
+      client.release()
+      const answer = await generateGeneralAnswer(question)
+      return res.status(200).json({ sql: null, rows: [], explanation: answer, signals: [], rowCount: 0 })
+    }
+
     const validErr = validateSql(sql)
     if (validErr) throw new Error(validErr)
 
