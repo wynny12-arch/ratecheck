@@ -172,9 +172,14 @@ function formatValue(v) {
 
 function isNumeric(v) { return typeof v === 'number' }
 
+const PAGE_SIZE = 25
+
 function ResultTable({ rows }) {
   const wrapRef = useRef(null)
   const [overflows, setOverflows] = useState(false)
+  const [visible, setVisible] = useState(PAGE_SIZE)
+
+  useEffect(() => { setVisible(PAGE_SIZE) }, [rows])
 
   useEffect(() => {
     const el = wrapRef.current
@@ -184,25 +189,35 @@ function ResultTable({ rows }) {
     const ro = new ResizeObserver(check)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [rows])
+  }, [rows, visible])
 
   if (!rows || rows.length === 0) return <p style={{ color: 'var(--ink-faint)', fontSize: 14 }}>No rows returned.</p>
   const cols = Object.keys(rows[0])
+  const shown = rows.slice(0, visible)
+  const remaining = rows.length - visible
+
   return (
     <div>
-      <div ref={wrapRef} style={{ overflowX: 'auto' }}>
-        <table>
-          <thead>
-            <tr>{cols.map(c => <th key={c} className={isNumeric(rows[0][c]) ? 'num' : ''}>{c.replace(/_/g, ' ')}</th>)}</tr>
-          </thead>
-          <tbody>
-            {rows.map((row, i) => (
-              <tr key={i}>{cols.map(c => <td key={c} className={isNumeric(row[c]) ? 'num' : ''}>{formatValue(row[c])}</td>)}</tr>
-            ))}
-          </tbody>
-        </table>
+      <div style={{ position: 'relative' }}>
+        <div ref={wrapRef} style={{ overflowX: 'auto' }}>
+          <table>
+            <thead>
+              <tr>{cols.map(c => <th key={c} className={isNumeric(rows[0][c]) ? 'num' : ''}>{c.replace(/_/g, ' ')}</th>)}</tr>
+            </thead>
+            <tbody>
+              {shown.map((row, i) => (
+                <tr key={i}>{cols.map(c => <td key={c} className={isNumeric(row[c]) ? 'num' : ''}>{formatValue(row[c])}</td>)}</tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {overflows && <div className="table-fade-right" />}
       </div>
-      {overflows && <div className="scroll-hint">← scroll →</div>}
+      {remaining > 0 && (
+        <button className="show-more" onClick={() => setVisible(v => v + PAGE_SIZE)}>
+          Show {Math.min(remaining, PAGE_SIZE)} more <span className="show-more-count">({remaining} remaining)</span>
+        </button>
+      )}
     </div>
   )
 }
