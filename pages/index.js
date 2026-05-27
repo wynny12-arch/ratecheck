@@ -440,7 +440,7 @@ export default function Home() {
             ))}
           </div>
           <div className="icon-rail-bottom">
-            <div className="user-avatar" title={user?.email}>{initial}</div>
+            <div className="user-avatar">{initial}</div>
           </div>
         </nav>
 
