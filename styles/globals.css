@@ -503,7 +503,16 @@ details.sql pre {
 }
 .followup-assistant { color: var(--ink-soft); }
 .followup-loading { color: var(--ink-faint); font-style: italic; }
-.followup-row { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.followup-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  position: sticky;
+  bottom: 0;
+  background: var(--paper);
+  padding: 8px 0 4px;
+}
 .followup-input {
   flex: 1;
   border: 1px solid var(--rule);
